@@ -27,6 +27,31 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
 .app{max-width:960px;margin:0 auto;padding:24px 20px 80px}
 
+/* Auth bar */
+.auth-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px;gap:12px;flex-wrap:wrap}
+.auth-user{display:flex;align-items:center;gap:10px;font-size:13px;min-width:0}
+.auth-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0}
+.auth-name{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.auth-email{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sync-status{font-size:11px;font-family:var(--mono);display:flex;align-items:center;gap:6px;flex-shrink:0}
+.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sync-dot.synced{background:var(--accent)}
+.sync-dot.syncing{background:var(--warm);animation:pulse .8s infinite}
+.sync-dot.offline{background:var(--text3)}
+.sync-dot.error{background:var(--danger)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Sign-in screen */
+.signin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:24px;text-align:center}
+.signin-logo{font-size:13px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-family:var(--mono)}
+.signin-title{font-size:28px;font-weight:700;letter-spacing:-.02em}
+.signin-sub{font-size:14px;color:var(--text2);max-width:360px}
+.signin-btn{font-family:var(--font);font-size:15px;font-weight:600;padding:12px 32px;border-radius:var(--radius-sm);border:none;background:#fff;color:#111;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .15s}
+.signin-btn:hover{transform:scale(1.02);box-shadow:0 4px 20px rgba(255,255,255,.1)}
+.signin-btn img{width:20px;height:20px}
+.signin-skip{font-size:13px;color:var(--text3);cursor:pointer;text-decoration:underline;background:none;border:none;font-family:var(--font)}
+.signin-skip:hover{color:var(--text2)}
+
 .header{margin-bottom:24px}
 .header-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:12px;flex-wrap:wrap}
 .logo{font-size:13px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-family:var(--mono)}
@@ -161,7 +186,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
   .countdown-actions{opacity:1}
   .block-edit-btns{opacity:1}
 }
-@media print{body{background:#fff;color:#111}.btn,.tabs,.header-actions,.block-edit-btns,.countdown-actions{display:none}}
+@media print{body{background:#fff;color:#111}.btn,.tabs,.header-actions,.block-edit-btns,.countdown-actions,.auth-bar{display:none}}
 .hidden{display:none!important}
 #import-file{display:none}
 </style>
@@ -169,103 +194,294 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 <body>
 <div class="app" id="app">
 
-  <div class="header">
-    <div class="header-top">
-      <div>
-        <div class="logo">Routine Engine</div>
-        <div class="date-display" id="main-date"></div>
-        <div class="date-sub" id="main-date-sub"></div>
-      </div>
-      <div class="header-actions">
-        <button class="btn" onclick="exportData()">&#8595; Export</button>
-        <button class="btn" onclick="document.getElementById('import-file').click()">&#8593; Import</button>
-        <input type="file" id="import-file" accept=".json" onchange="importData(event)">
-        <button class="btn btn-danger" onclick="resetToday()">Reset day</button>
-      </div>
-    </div>
+  <!-- Sign-in screen (shown when not logged in) -->
+  <div id="signin-screen" class="signin-screen">
+    <div class="signin-logo">Routine Engine</div>
+    <div class="signin-title">Your daily command center</div>
+    <div class="signin-sub">Sign in with Google to sync your routine, GMAT progress, and streaks across all your devices.</div>
+    <button class="signin-btn" onclick="signInWithGoogle()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
+      Sign in with Google
+    </button>
+    <button class="signin-skip" onclick="skipSignIn()">Continue without signing in</button>
   </div>
 
-  <div class="countdowns" id="countdowns-list"></div>
-  <div style="margin-bottom:24px"><button class="btn btn-sm" onclick="openCountdownModal()">+ Add countdown</button></div>
+  <!-- Main app (shown after auth) -->
+  <div id="main-app" class="hidden">
 
-  <div class="stats-bar">
-    <div class="stat-card"><div class="stat-label">Today</div><div class="stat-value" id="stat-today">0<span class="unit">%</span></div></div>
-    <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" id="stat-streak">0 <span class="unit">days</span></div></div>
-    <div class="stat-card"><div class="stat-label">Week avg</div><div class="stat-value" id="stat-week">0<span class="unit">%</span></div></div>
-    <div class="stat-card"><div class="stat-label">Total days</div><div class="stat-value" id="stat-total">0</div></div>
-  </div>
-
-  <div class="tabs">
-    <button class="tab active" data-tab="schedule" onclick="switchTab('schedule')">Schedule</button>
-    <button class="tab" data-tab="gmat" onclick="switchTab('gmat')">GMAT</button>
-    <button class="tab" data-tab="history" onclick="switchTab('history')">History</button>
-    <button class="tab" data-tab="labels" onclick="switchTab('labels')">Labels</button>
-  </div>
-
-  <div id="tab-schedule">
-    <div class="date-nav">
-      <button class="date-nav-btn" onclick="navDate(-1)">&larr;</button>
-      <span class="date-nav-label" id="nav-date-label"></span>
-      <button class="date-nav-btn" onclick="navDate(1)">&rarr;</button>
-      <button class="btn btn-sm" onclick="navToToday()">Today</button>
-    </div>
-    <div style="margin-bottom:12px"><button class="btn btn-sm btn-accent" onclick="openBlockModal()">+ Add block</button></div>
-    <div class="schedule" id="schedule-list"></div>
-    <div class="notes-area">
-      <label>Daily notes</label>
-      <textarea id="daily-notes" placeholder="How did today go? Any reflections..." oninput="saveNotes()"></textarea>
-    </div>
-  </div>
-
-  <div id="tab-gmat" class="hidden">
-    <div class="gmat-grid">
-      <div class="gmat-card">
-        <h3><span style="color:var(--warm)">&#9670;</span> Log practice</h3>
-        <div class="gmat-input-row">
-          <select id="gmat-type"><option value="quant">Quant</option><option value="verbal">Verbal</option><option value="di">Data insights</option><option value="mock">Full mock</option></select>
-          <input type="text" id="gmat-topic" placeholder="Topic (e.g. Algebra)">
+    <!-- Auth bar -->
+    <div class="auth-bar" id="auth-bar">
+      <div class="auth-user" id="auth-user-info"></div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="sync-status" id="sync-status">
+          <div class="sync-dot offline"></div>
+          <span>Local only</span>
         </div>
-        <div class="gmat-input-row">
-          <input type="number" id="gmat-correct" placeholder="Correct" min="0">
-          <input type="number" id="gmat-total" placeholder="Total Qs" min="0">
-          <input type="number" id="gmat-minutes" placeholder="Minutes" min="0">
+        <button class="btn btn-sm" id="auth-btn" onclick="handleAuthClick()">Sign in</button>
+      </div>
+    </div>
+
+    <div class="header">
+      <div class="header-top">
+        <div>
+          <div class="logo">Routine Engine</div>
+          <div class="date-display" id="main-date"></div>
+          <div class="date-sub" id="main-date-sub"></div>
         </div>
-        <button class="btn btn-accent" style="width:100%;justify-content:center;margin-top:8px" onclick="logGMAT()">Log practice</button>
+        <div class="header-actions">
+          <button class="btn" onclick="exportData()">&#8595; Export</button>
+          <button class="btn" onclick="document.getElementById('import-file').click()">&#8593; Import</button>
+          <input type="file" id="import-file" accept=".json" onchange="importData(event)">
+          <button class="btn btn-danger" onclick="resetToday()">Reset day</button>
+        </div>
       </div>
-      <div class="gmat-card">
-        <h3><span style="color:var(--warm)">&#9670;</span> Accuracy trend</h3>
-        <canvas id="gmat-chart" height="140"></canvas>
+    </div>
+
+    <div class="countdowns" id="countdowns-list"></div>
+    <div style="margin-bottom:24px"><button class="btn btn-sm" onclick="openCountdownModal()">+ Add countdown</button></div>
+
+    <div class="stats-bar">
+      <div class="stat-card"><div class="stat-label">Today</div><div class="stat-value" id="stat-today">0<span class="unit">%</span></div></div>
+      <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" id="stat-streak">0 <span class="unit">days</span></div></div>
+      <div class="stat-card"><div class="stat-label">Week avg</div><div class="stat-value" id="stat-week">0<span class="unit">%</span></div></div>
+      <div class="stat-card"><div class="stat-label">Total days</div><div class="stat-value" id="stat-total">0</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="schedule" onclick="switchTab('schedule')">Schedule</button>
+      <button class="tab" data-tab="gmat" onclick="switchTab('gmat')">GMAT</button>
+      <button class="tab" data-tab="history" onclick="switchTab('history')">History</button>
+      <button class="tab" data-tab="labels" onclick="switchTab('labels')">Labels</button>
+    </div>
+
+    <div id="tab-schedule">
+      <div class="date-nav">
+        <button class="date-nav-btn" onclick="navDate(-1)">&larr;</button>
+        <span class="date-nav-label" id="nav-date-label"></span>
+        <button class="date-nav-btn" onclick="navDate(1)">&rarr;</button>
+        <button class="btn btn-sm" onclick="navToToday()">Today</button>
+      </div>
+      <div style="margin-bottom:12px"><button class="btn btn-sm btn-accent" onclick="openBlockModal()">+ Add block</button></div>
+      <div class="schedule" id="schedule-list"></div>
+      <div class="notes-area">
+        <label>Daily notes</label>
+        <textarea id="daily-notes" placeholder="How did today go? Any reflections..." oninput="saveNotes()"></textarea>
       </div>
     </div>
-    <div class="gmat-card" style="margin-top:12px">
-      <h3><span style="color:var(--warm)">&#9670;</span> Practice log</h3>
-      <div class="gmat-log" id="gmat-log"></div>
-    </div>
-  </div>
 
-  <div id="tab-history" class="hidden">
-    <div style="margin-bottom:24px">
-      <div class="heatmap-label">Completion heatmap (last 90 days)</div>
-      <div class="heatmap-grid" id="heatmap"></div>
+    <div id="tab-gmat" class="hidden">
+      <div class="gmat-grid">
+        <div class="gmat-card">
+          <h3><span style="color:var(--warm)">&#9670;</span> Log practice</h3>
+          <div class="gmat-input-row">
+            <select id="gmat-type"><option value="quant">Quant</option><option value="verbal">Verbal</option><option value="di">Data insights</option><option value="mock">Full mock</option></select>
+            <input type="text" id="gmat-topic" placeholder="Topic (e.g. Algebra)">
+          </div>
+          <div class="gmat-input-row">
+            <input type="number" id="gmat-correct" placeholder="Correct" min="0">
+            <input type="number" id="gmat-total" placeholder="Total Qs" min="0">
+            <input type="number" id="gmat-minutes" placeholder="Minutes" min="0">
+          </div>
+          <button class="btn btn-accent" style="width:100%;justify-content:center;margin-top:8px" onclick="logGMAT()">Log practice</button>
+        </div>
+        <div class="gmat-card">
+          <h3><span style="color:var(--warm)">&#9670;</span> Accuracy trend</h3>
+          <canvas id="gmat-chart" height="140"></canvas>
+        </div>
+      </div>
+      <div class="gmat-card" style="margin-top:12px">
+        <h3><span style="color:var(--warm)">&#9670;</span> Practice log</h3>
+        <div class="gmat-log" id="gmat-log"></div>
+      </div>
     </div>
-    <div class="heatmap-label">Daily completion log</div>
-    <div class="history-grid" id="history-list"></div>
-  </div>
 
-  <div id="tab-labels" class="hidden">
-    <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
-      <div class="heatmap-label" style="margin:0">Manage labels</div>
-      <button class="btn btn-sm btn-accent" onclick="openLabelModal()">+ New label</button>
+    <div id="tab-history" class="hidden">
+      <div style="margin-bottom:24px">
+        <div class="heatmap-label">Completion heatmap (last 90 days)</div>
+        <div class="heatmap-grid" id="heatmap"></div>
+      </div>
+      <div class="heatmap-label">Daily completion log</div>
+      <div class="history-grid" id="history-list"></div>
     </div>
-    <div class="label-list" id="labels-list"></div>
-  </div>
+
+    <div id="tab-labels" class="hidden">
+      <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+        <div class="heatmap-label" style="margin:0">Manage labels</div>
+        <button class="btn btn-sm btn-accent" onclick="openLabelModal()">+ New label</button>
+      </div>
+      <div class="label-list" id="labels-list"></div>
+    </div>
+
+  </div><!-- /main-app -->
 </div>
 
 <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
   <div class="modal" id="modal-body" onclick="event.stopPropagation()"></div>
 </div>
 
+<!-- Firebase SDK (modular, from CDN) -->
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import{getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import{getFirestore,doc,setDoc,getDoc}from"https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+const firebaseConfig={
+  apiKey:"AIzaSyDyynQYVSxkJM9Hn4XkYHxYdkb5Db5ReHI",
+  authDomain:"routine-engine.firebaseapp.com",
+  projectId:"routine-engine",
+  storageBucket:"routine-engine.firebasestorage.app",
+  messagingSenderId:"624834600244",
+  appId:"1:624834600244:web:9a3d400121c826c2531961"
+};
+
+const fbApp=initializeApp(firebaseConfig);
+const auth=getAuth(fbApp);
+const db=getFirestore(fbApp);
+const provider=new GoogleAuthProvider();
+
+let currentUser=null;
+
+// Expose to global scope for onclick handlers
+window.signInWithGoogle=async function(){
+  try{
+    await signInWithPopup(auth,provider);
+  }catch(e){
+    console.error('Sign-in error:',e);
+    if(e.code!=='auth/popup-closed-by-user') alert('Sign-in failed: '+e.message);
+  }
+};
+
+window.signOutUser=async function(){
+  try{await signOut(auth)}catch(e){console.error('Sign-out error:',e)}
+};
+
+window.handleAuthClick=function(){
+  if(currentUser)window.signOutUser();
+  else window.signInWithGoogle();
+};
+
+window.skipSignIn=function(){
+  document.getElementById('signin-screen').classList.add('hidden');
+  document.getElementById('main-app').classList.remove('hidden');
+  updateAuthUI(null);
+  render();
+};
+
+// ── Cloud sync ──
+let syncTimeout=null;
+
+window.syncToCloud=async function(){
+  if(!currentUser)return;
+  setSyncStatus('syncing','Syncing...');
+  try{
+    const ref=doc(db,'users',currentUser.uid,'data','routine');
+    await setDoc(ref,{state:JSON.stringify(state),updatedAt:Date.now()});
+    setSyncStatus('synced','Synced');
+  }catch(e){
+    console.error('Sync error:',e);
+    setSyncStatus('error','Sync failed');
+  }
+};
+
+window.syncFromCloud=async function(){
+  if(!currentUser)return null;
+  try{
+    const ref=doc(db,'users',currentUser.uid,'data','routine');
+    const snap=await getDoc(ref);
+    if(snap.exists()){
+      const cloud=JSON.parse(snap.data().state);
+      return cloud;
+    }
+  }catch(e){
+    console.error('Load error:',e);
+  }
+  return null;
+};
+
+function debouncedSync(){
+  if(syncTimeout)clearTimeout(syncTimeout);
+  syncTimeout=setTimeout(()=>window.syncToCloud(),1500);
+}
+
+// Override saveState to also sync to cloud
+const _origSaveState=window.saveState;
+window.saveState=function(){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  debouncedSync();
+};
+
+function setSyncStatus(type,text){
+  const el=document.getElementById('sync-status');
+  if(!el)return;
+  el.innerHTML=`<div class="sync-dot ${type}"></div><span>${text}</span>`;
+}
+
+function updateAuthUI(user){
+  const info=document.getElementById('auth-user-info');
+  const btn=document.getElementById('auth-btn');
+  if(user){
+    info.innerHTML=`
+      ${user.photoURL?`<img class="auth-avatar" src="${user.photoURL}" alt="">`:``}
+      <div>
+        <div class="auth-name">${user.displayName||'User'}</div>
+        <div class="auth-email">${user.email||''}</div>
+      </div>`;
+    btn.textContent='Sign out';
+    setSyncStatus('synced','Synced');
+  }else{
+    info.innerHTML='<span style="color:var(--text3);font-size:12px">Not signed in — data is local only</span>';
+    btn.textContent='Sign in';
+    setSyncStatus('offline','Local only');
+  }
+}
+
+// ── Auth state listener ──
+onAuthStateChanged(auth,async(user)=>{
+  currentUser=user;
+  document.getElementById('signin-screen').classList.add('hidden');
+  document.getElementById('main-app').classList.remove('hidden');
+  updateAuthUI(user);
+
+  if(user){
+    // Try loading from cloud and merge with local
+    setSyncStatus('syncing','Loading...');
+    const cloudState=await window.syncFromCloud();
+    if(cloudState){
+      // Merge: cloud data fills missing, more-complete data wins
+      const local=state;
+      // Labels & schedule & countdowns: prefer cloud (it's the latest synced)
+      if(cloudState.labels)state.labels=cloudState.labels;
+      if(cloudState.schedule)state.schedule=cloudState.schedule;
+      if(cloudState.countdowns)state.countdowns=cloudState.countdowns;
+      // Days: keep whichever has more completed per day
+      if(cloudState.days){
+        for(const[date,dd] of Object.entries(cloudState.days)){
+          if(!state.days[date])state.days[date]=dd;
+          else if(dd.completed.length>state.days[date].completed.length)state.days[date]=dd;
+        }
+      }
+      // GMAT: deduplicate
+      if(cloudState.gmat){
+        const keys=new Set(state.gmat.map(g=>`${g.date}-${g.type}-${g.topic}-${g.correct}`));
+        for(const g of cloudState.gmat){
+          if(!keys.has(`${g.date}-${g.type}-${g.topic}-${g.correct}`))state.gmat.push(g);
+        }
+      }
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+      setSyncStatus('synced','Synced');
+    }else{
+      // First time signing in — push local data to cloud
+      await window.syncToCloud();
+    }
+  }
+  render();
+});
+</script>
+
 <script>
+// ══════════════════════════════════════
+// APP STATE (same as before, runs immediately)
+// ══════════════════════════════════════
 const STORAGE_KEY='routine_engine_v2';
 const PRESET_COLORS=['#FF6B6B','#FF9F43','#FECA57','#C8FF3E','#2DD4BF','#54A0FF','#A78BFA','#F472B6','#6EE7B7','#FCA5A5','#94A3B8','#67E8F9','#FDE68A','#D4D4D8'];
 const DEFAULT_LABELS=[{id:'gmat',name:'GMAT',color:'#FF9F43'},{id:'work',name:'Work',color:'#54A0FF'},{id:'health',name:'Health',color:'#2DD4BF'},{id:'ai',name:'AI',color:'#A78BFA'},{id:'personal',name:'Personal',color:'#C8FF3E'},{id:'rest',name:'Rest',color:'#94A3B8'}];
@@ -296,6 +512,7 @@ function loadState(){
   try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);if(!s.labels)s.labels=DEFAULT_LABELS;if(!s.schedule)s.schedule=DEFAULT_SCHEDULE;if(!s.countdowns)s.countdowns=DEFAULT_COUNTDOWNS;if(!s.days)s.days={};if(!s.gmat)s.gmat=[];return s}}catch(e){}
   return{labels:JSON.parse(JSON.stringify(DEFAULT_LABELS)),schedule:JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),countdowns:JSON.parse(JSON.stringify(DEFAULT_COUNTDOWNS)),days:{},gmat:[]}
 }
+// saveState is overridden by the Firebase module above to also sync to cloud
 function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
 function getDayData(ds){if(!state.days[ds])state.days[ds]={completed:[],notes:''};return state.days[ds]}
 function getLabel(id){return state.labels.find(l=>l.id===id)||{id,name:id,color:'#94A3B8'}}
@@ -353,7 +570,7 @@ function renderSchedule(){
       </div>
     </div>`
   }).join('');
-  document.getElementById('daily-notes').value=dayData.notes||'';
+  document.getElementById('daily-notes').value=getDayData(viewDate).notes||'';
   document.getElementById('nav-date-label').textContent=viewDate
 }
 
@@ -387,7 +604,6 @@ function renderHeatmap(){
   grid.innerHTML=cells.join('')
 }
 
-// Schedule CRUD
 function toggleBlock(id){const d=getDayData(viewDate);const i=d.completed.indexOf(id);if(i>=0)d.completed.splice(i,1);else d.completed.push(id);saveState();render()}
 function moveBlock(idx,dir){const t=state.schedule[idx];state.schedule[idx]=state.schedule[idx+dir];state.schedule[idx+dir]=t;saveState();render()}
 function deleteBlock(id){if(!confirm('Delete this block?'))return;state.schedule=state.schedule.filter(b=>b.id!==id);saveState();render()}
@@ -396,10 +612,8 @@ function navDate(delta){const d=new Date(viewDate+'T00:00:00');d.setDate(d.getDa
 function navToToday(){viewDate=todayStr();render()}
 function resetToday(){if(confirm('Reset all checkmarks for this day?')){const d=getDayData(viewDate);d.completed=[];d.notes='';saveState();render()}}
 
-// Countdown CRUD
 function deleteCountdown(id){if(confirm('Remove this countdown?')){state.countdowns=state.countdowns.filter(c=>c.id!==id);saveState();render()}}
 
-// Label CRUD
 function deleteLabel(id){
   const count=state.schedule.filter(s=>s.label===id).length;
   const msg=count>0?`This label is used by ${count} block(s). Blocks will show the raw ID. Delete?`:'Delete this label?';
@@ -407,7 +621,6 @@ function deleteLabel(id){
   state.labels=state.labels.filter(l=>l.id!==id);saveState();render()
 }
 
-// GMAT
 function logGMAT(){
   const type=document.getElementById('gmat-type').value;const topic=document.getElementById('gmat-topic').value.trim()||'General';
   const correct=parseInt(document.getElementById('gmat-correct').value)||0;const total=parseInt(document.getElementById('gmat-total').value)||0;
@@ -436,14 +649,12 @@ function renderGMATChart(){
   ctx.font='10px DM Sans';ctx.fillStyle='#FF9F43';ctx.textAlign='left';ctx.fillText('● Quant',pad.left,h-4);ctx.fillStyle='#54A0FF';ctx.fillText('● Verbal',pad.left+65,h-4)
 }
 
-// Tabs
 function switchTab(tab){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   ['schedule','gmat','history','labels'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==tab));
   if(tab==='gmat')setTimeout(renderGMATChart,50)
 }
 
-// Modals
 function openModal(html){document.getElementById('modal-body').innerHTML=html;document.getElementById('modal-overlay').classList.add('open')}
 function closeModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('modal-overlay').classList.remove('open')}
 
@@ -452,7 +663,6 @@ function colorPicker(selected,name){
 }
 function labelOptions(selected){return state.labels.map(l=>`<option value="${l.id}" ${l.id===selected?'selected':''}>${l.name}</option>`).join('')}
 
-// Block Modal
 function openBlockModal(editId){
   const ex=editId?state.schedule.find(b=>b.id===editId):null;const isEdit=!!ex;
   openModal(`<h2>${isEdit?'Edit block':'Add new block'}</h2>
@@ -473,7 +683,6 @@ function saveBlock(editId){
   state.schedule.sort((a,b)=>a.time.localeCompare(b.time));saveState();closeModal();render()
 }
 
-// Label Modal
 function openLabelModal(editId){
   const ex=editId?state.labels.find(l=>l.id===editId):null;const isEdit=!!ex;
   openModal(`<h2>${isEdit?'Edit label':'New label'}</h2>
@@ -489,7 +698,6 @@ function saveLabel(editId){
   saveState();closeModal();render()
 }
 
-// Countdown Modal
 function openCountdownModal(editId){
   const ex=editId?state.countdowns.find(c=>c.id===editId):null;const isEdit=!!ex;
   openModal(`<h2>${isEdit?'Edit countdown':'Add countdown'}</h2>
@@ -506,7 +714,6 @@ function saveCountdown(editId){
   state.countdowns.sort((a,b)=>a.date.localeCompare(b.date));saveState();closeModal();render()
 }
 
-// Export/Import
 function exportData(){
   const json=JSON.stringify(state,null,2);const blob=new Blob([json],{type:'application/json'});const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=`routine-engine-${todayStr()}.json`;a.click();URL.revokeObjectURL(url)
@@ -527,6 +734,7 @@ function importData(event){
   };reader.readAsText(file);event.target.value=''
 }
 
+// Initial render (Firebase auth listener will re-render after cloud load)
 render();
 setInterval(()=>{if(viewDate===todayStr())render()},60000);
 
@@ -536,12 +744,10 @@ setInterval(()=>{if(viewDate===todayStr())render()},60000);
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js').then(r=>{
     console.log('SW registered, scope:',r.scope);
-    // Check for updates every 30 min
     setInterval(()=>r.update(),1800000);
   }).catch(e=>console.warn('SW registration failed:',e));
 }
 
-// Capture the install prompt
 let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{
   e.preventDefault();
@@ -567,14 +773,12 @@ async function installPWA(){
   if(!deferredPrompt)return;
   deferredPrompt.prompt();
   const{outcome}=await deferredPrompt.userChoice;
-  console.log('Install outcome:',outcome);
   deferredPrompt=null;
   const b=document.getElementById('install-banner');
   if(b)b.remove();
 }
 
 window.addEventListener('appinstalled',()=>{
-  console.log('PWA installed');
   const b=document.getElementById('install-banner');
   if(b)b.remove();
 });
