@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Akash · Routine Engine</title>
+<meta name="theme-color" content="#C8FF3E">
+<meta name="description" content="Daily routine tracker with GMAT prep, AI learning, and habit streaks">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Routine">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0C0C0E;--bg2:#141418;--bg3:#1C1C22;--bg4:#26262E;--bg5:#32323C;
+  --text:#E8E6E1;--text2:#9B9A94;--text3:#5E5D58;
+  --accent:#C8FF3E;--accent2:#A3D930;
+  --danger:#FF6B6B;--warm:#FF9F43;--cool:#54A0FF;--purple:#A78BFA;--teal:#2DD4BF;
+  --border:rgba(255,255,255,0.06);
+  --font:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+  --radius:12px;--radius-sm:8px;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+.app{max-width:960px;margin:0 auto;padding:24px 20px 80px}
+
+.header{margin-bottom:24px}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:12px;flex-wrap:wrap}
+.logo{font-size:13px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-family:var(--mono)}
+.date-display{font-size:28px;font-weight:700;letter-spacing:-.02em}
+.date-sub{font-size:14px;color:var(--text2);margin-top:2px}
+.header-actions{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap}
+
+.btn{font-family:var(--font);font-size:13px;font-weight:500;padding:8px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--bg4);color:var(--text)}
+.btn-accent{background:var(--accent);color:#0C0C0E;border-color:var(--accent)}
+.btn-accent:hover{background:var(--accent2);border-color:var(--accent2)}
+.btn-danger{background:rgba(255,107,107,.12);color:var(--danger);border-color:rgba(255,107,107,.2)}
+.btn-danger:hover{background:rgba(255,107,107,.2)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-ghost{background:transparent;border-color:transparent;padding:4px 8px}
+.btn-ghost:hover{background:var(--bg4)}
+
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:var(--mono)}
+.stat-value{font-size:24px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+.stat-value .unit{font-size:14px;font-weight:400;color:var(--text2)}
+
+.countdowns{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.countdown-card{border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.countdown-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+.countdown-color{width:8px;height:36px;border-radius:4px;flex-shrink:0}
+.countdown-info{min-width:0}
+.countdown-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.countdown-date-text{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.countdown-days{font-size:28px;font-weight:700;font-family:var(--mono);flex-shrink:0;font-variant-numeric:tabular-nums}
+.countdown-days .unit{font-size:12px;font-weight:400;color:var(--text2)}
+.countdown-actions{display:flex;gap:2px;flex-shrink:0;opacity:0;transition:opacity .15s}
+.countdown-card:hover .countdown-actions{opacity:1}
+
+.tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--bg2);padding:4px;border-radius:var(--radius-sm);width:fit-content;flex-wrap:wrap}
+.tab{font-family:var(--font);font-size:13px;font-weight:500;padding:7px 18px;border-radius:6px;border:none;background:transparent;color:var(--text3);cursor:pointer;transition:all .15s}
+.tab.active{background:var(--bg4);color:var(--text)}
+.tab:hover:not(.active){color:var(--text2)}
+
+.schedule{display:flex;flex-direction:column;gap:2px}
+.time-block{display:grid;grid-template-columns:72px 1fr auto;align-items:center;gap:16px;padding:12px 16px;border-radius:var(--radius-sm);background:var(--bg2);border:1px solid transparent;transition:all .15s;position:relative}
+.time-block:hover{border-color:var(--border);background:var(--bg3)}
+.time-block.completed{opacity:.5}
+.time-block.completed .block-title{text-decoration:line-through}
+.time-block.active-now{border-color:var(--accent)}
+.time-block.active-now::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);border-radius:3px 0 0 3px}
+.block-time{font-size:13px;font-family:var(--mono);color:var(--text2)}
+.block-info{display:flex;flex-direction:column;gap:2px}
+.block-title{font-size:14px;font-weight:500}
+.block-desc{font-size:12px;color:var(--text3)}
+.block-right{display:flex;align-items:center;gap:8px}
+.block-tag{font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;font-family:var(--mono);white-space:nowrap}
+.check-circle{width:22px;height:22px;border-radius:50%;border:2px solid var(--bg4);display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;cursor:pointer}
+.time-block.completed .check-circle{background:var(--accent);border-color:var(--accent)}
+.check-circle svg{opacity:0;transition:opacity .15s}
+.time-block.completed .check-circle svg{opacity:1}
+.block-edit-btns{display:flex;gap:2px;opacity:0;transition:opacity .15s}
+.time-block:hover .block-edit-btns{opacity:1}
+
+.history-grid{display:flex;flex-direction:column;gap:8px}
+.history-row{display:grid;grid-template-columns:100px 1fr 80px;align-items:center;gap:12px;padding:12px 16px;background:var(--bg2);border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer}
+.history-row:hover{background:var(--bg3)}
+.history-date{font-size:13px;font-family:var(--mono);color:var(--text2)}
+.history-bar-wrap{height:8px;background:var(--bg4);border-radius:4px;overflow:hidden}
+.history-bar{height:100%;border-radius:4px;transition:width .3s}
+.history-pct{font-size:13px;font-weight:600;font-family:var(--mono);text-align:right}
+
+.heatmap-label{font-size:11px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.heatmap-grid{display:grid;grid-template-columns:repeat(auto-fill,16px);gap:3px}
+.heat-cell{width:16px;height:16px;border-radius:3px;position:relative}
+.heat-cell:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--bg4);color:var(--text);font-size:11px;padding:4px 8px;border-radius:4px;white-space:nowrap;z-index:10;pointer-events:none;font-family:var(--mono)}
+.heat-0{background:var(--bg3)}.heat-1{background:rgba(200,255,62,.15)}.heat-2{background:rgba(200,255,62,.3)}.heat-3{background:rgba(200,255,62,.5)}.heat-4{background:rgba(200,255,62,.75)}.heat-5{background:var(--accent)}
+
+.gmat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gmat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.gmat-card h3{font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.gmat-input-row{display:flex;gap:8px;margin-bottom:8px}
+.gmat-input-row input,.gmat-input-row select{font-family:var(--font);font-size:13px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);flex:1;outline:none}
+.gmat-input-row input:focus,.gmat-input-row select:focus{border-color:var(--accent)}
+.gmat-input-row select{flex:.6}
+.gmat-log{max-height:180px;overflow-y:auto}
+.gmat-log-entry{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;gap:8px}
+.gmat-log-entry:last-child{border-bottom:none}
+.gmat-log-date{color:var(--text3);font-family:var(--mono);flex-shrink:0}
+.gmat-log-topic{color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gmat-log-score{font-weight:600;font-family:var(--mono);flex-shrink:0}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;width:90%;max-width:520px;max-height:85vh;overflow-y:auto}
+.modal h2{font-size:18px;font-weight:600;margin-bottom:20px}
+.modal-actions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end}
+
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:12px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.form-input{width:100%;font-family:var(--font);font-size:14px;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg3);color:var(--text);outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--accent)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239B9A94' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+
+.label-list{display:flex;flex-direction:column;gap:6px}
+.label-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border)}
+.label-color-dot{width:14px;height:14px;border-radius:4px;flex-shrink:0;cursor:pointer;border:1px solid rgba(255,255,255,.1)}
+.label-name{flex:1;font-size:13px;font-weight:500}
+.label-count{font-size:11px;color:var(--text3);font-family:var(--mono)}
+
+.color-options{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.color-opt{width:28px;height:28px;border-radius:6px;cursor:pointer;border:2px solid transparent;transition:all .15s}
+.color-opt:hover{transform:scale(1.1)}
+.color-opt.selected{border-color:var(--text);transform:scale(1.1)}
+
+.date-nav{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.date-nav-btn{font-family:var(--font);font-size:16px;width:32px;height:32px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.date-nav-btn:hover{background:var(--bg4);color:var(--text)}
+.date-nav-label{font-size:14px;font-weight:500;font-family:var(--mono)}
+
+.notes-area{margin-top:20px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.notes-area label{font-size:12px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:8px}
+.notes-area textarea{width:100%;min-height:80px;font-family:var(--font);font-size:13px;padding:10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg3);color:var(--text);resize:vertical;outline:none}
+.notes-area textarea:focus{border-color:var(--accent)}
+
+.empty-state{text-align:center;color:var(--text3);padding:24px;font-size:13px}
+
+@media(max-width:640px){
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+  .gmat-grid{grid-template-columns:1fr}
+  .time-block{grid-template-columns:60px 1fr auto;gap:10px;padding:10px 12px}
+  .header-top{flex-direction:column;gap:12px}
+  .form-row{grid-template-columns:1fr}
+  .countdown-card{flex-wrap:wrap}
+  .countdown-actions{opacity:1}
+  .block-edit-btns{opacity:1}
+}
+@media print{body{background:#fff;color:#111}.btn,.tabs,.header-actions,.block-edit-btns,.countdown-actions{display:none}}
+.hidden{display:none!important}
+#import-file{display:none}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="logo">Routine Engine</div>
+        <div class="date-display" id="main-date"></div>
+        <div class="date-sub" id="main-date-sub"></div>
+      </div>
+      <div class="header-actions">
+        <button class="btn" onclick="exportData()">&#8595; Export</button>
+        <button class="btn" onclick="document.getElementById('import-file').click()">&#8593; Import</button>
+        <input type="file" id="import-file" accept=".json" onchange="importData(event)">
+        <button class="btn btn-danger" onclick="resetToday()">Reset day</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="countdowns" id="countdowns-list"></div>
+  <div style="margin-bottom:24px"><button class="btn btn-sm" onclick="openCountdownModal()">+ Add countdown</button></div>
+
+  <div class="stats-bar">
+    <div class="stat-card"><div class="stat-label">Today</div><div class="stat-value" id="stat-today">0<span class="unit">%</span></div></div>
+    <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" id="stat-streak">0 <span class="unit">days</span></div></div>
+    <div class="stat-card"><div class="stat-label">Week avg</div><div class="stat-value" id="stat-week">0<span class="unit">%</span></div></div>
+    <div class="stat-card"><div class="stat-label">Total days</div><div class="stat-value" id="stat-total">0</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="schedule" onclick="switchTab('schedule')">Schedule</button>
+    <button class="tab" data-tab="gmat" onclick="switchTab('gmat')">GMAT</button>
+    <button class="tab" data-tab="history" onclick="switchTab('history')">History</button>
+    <button class="tab" data-tab="labels" onclick="switchTab('labels')">Labels</button>
+  </div>
+
+  <div id="tab-schedule">
+    <div class="date-nav">
+      <button class="date-nav-btn" onclick="navDate(-1)">&larr;</button>
+      <span class="date-nav-label" id="nav-date-label"></span>
+      <button class="date-nav-btn" onclick="navDate(1)">&rarr;</button>
+      <button class="btn btn-sm" onclick="navToToday()">Today</button>
+    </div>
+    <div style="margin-bottom:12px"><button class="btn btn-sm btn-accent" onclick="openBlockModal()">+ Add block</button></div>
+    <div class="schedule" id="schedule-list"></div>
+    <div class="notes-area">
+      <label>Daily notes</label>
+      <textarea id="daily-notes" placeholder="How did today go? Any reflections..." oninput="saveNotes()"></textarea>
+    </div>
+  </div>
+
+  <div id="tab-gmat" class="hidden">
+    <div class="gmat-grid">
+      <div class="gmat-card">
+        <h3><span style="color:var(--warm)">&#9670;</span> Log practice</h3>
+        <div class="gmat-input-row">
+          <select id="gmat-type"><option value="quant">Quant</option><option value="verbal">Verbal</option><option value="di">Data insights</option><option value="mock">Full mock</option></select>
+          <input type="text" id="gmat-topic" placeholder="Topic (e.g. Algebra)">
+        </div>
+        <div class="gmat-input-row">
+          <input type="number" id="gmat-correct" placeholder="Correct" min="0">
+          <input type="number" id="gmat-total" placeholder="Total Qs" min="0">
+          <input type="number" id="gmat-minutes" placeholder="Minutes" min="0">
+        </div>
+        <button class="btn btn-accent" style="width:100%;justify-content:center;margin-top:8px" onclick="logGMAT()">Log practice</button>
+      </div>
+      <div class="gmat-card">
+        <h3><span style="color:var(--warm)">&#9670;</span> Accuracy trend</h3>
+        <canvas id="gmat-chart" height="140"></canvas>
+      </div>
+    </div>
+    <div class="gmat-card" style="margin-top:12px">
+      <h3><span style="color:var(--warm)">&#9670;</span> Practice log</h3>
+      <div class="gmat-log" id="gmat-log"></div>
+    </div>
+  </div>
+
+  <div id="tab-history" class="hidden">
+    <div style="margin-bottom:24px">
+      <div class="heatmap-label">Completion heatmap (last 90 days)</div>
+      <div class="heatmap-grid" id="heatmap"></div>
+    </div>
+    <div class="heatmap-label">Daily completion log</div>
+    <div class="history-grid" id="history-list"></div>
+  </div>
+
+  <div id="tab-labels" class="hidden">
+    <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+      <div class="heatmap-label" style="margin:0">Manage labels</div>
+      <button class="btn btn-sm btn-accent" onclick="openLabelModal()">+ New label</button>
+    </div>
+    <div class="label-list" id="labels-list"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal-body" onclick="event.stopPropagation()"></div>
+</div>
+
+<script>
+const STORAGE_KEY='routine_engine_v2';
+const PRESET_COLORS=['#FF6B6B','#FF9F43','#FECA57','#C8FF3E','#2DD4BF','#54A0FF','#A78BFA','#F472B6','#6EE7B7','#FCA5A5','#94A3B8','#67E8F9','#FDE68A','#D4D4D8'];
+const DEFAULT_LABELS=[{id:'gmat',name:'GMAT',color:'#FF9F43'},{id:'work',name:'Work',color:'#54A0FF'},{id:'health',name:'Health',color:'#2DD4BF'},{id:'ai',name:'AI',color:'#A78BFA'},{id:'personal',name:'Personal',color:'#C8FF3E'},{id:'rest',name:'Rest',color:'#94A3B8'}];
+const DEFAULT_SCHEDULE=[
+  {id:'s1',time:'06:00',title:'Wake up + freshen up',desc:'Morning hygiene, water, light stretch',label:'rest',dur:30},
+  {id:'s2',time:'06:30',title:'GMAT practice — Quant',desc:'Focus session: problem sets + review',label:'gmat',dur:60},
+  {id:'s3',time:'07:30',title:'GMAT practice — Verbal',desc:'RC, CR, or SC drills',label:'gmat',dur:45},
+  {id:'s4',time:'08:15',title:'Get ready + commute',desc:'45 min travel to office',label:'work',dur:45},
+  {id:'s5',time:'09:00',title:'Office — Irdeto',desc:'Incident mgmt, ops, Keystone',label:'work',dur:510},
+  {id:'s6',time:'17:30',title:'Commute back',desc:'45 min travel home',label:'work',dur:45},
+  {id:'s7',time:'18:15',title:'Rest + freshen up',desc:'Decompress, snack, change',label:'rest',dur:45},
+  {id:'s8',time:'19:00',title:'Time with GF',desc:'Call / hangout / quality time',label:'personal',dur:60},
+  {id:'s9',time:'20:00',title:'Dog walk + exercise',desc:'45 min walk + your own workout',label:'health',dur:60},
+  {id:'s10',time:'21:00',title:'AI / Cloud learning',desc:'Roadmap study: certs, hands-on labs',label:'ai',dur:60},
+  {id:'s11',time:'22:00',title:'Book reading',desc:'Non-screen wind-down reading',label:'personal',dur:45},
+  {id:'s12',time:'22:45',title:'Wind down + sleep prep',desc:'No screens, journal, sleep by midnight',label:'rest',dur:75}
+];
+const DEFAULT_COUNTDOWNS=[{id:'c1',name:'GMAT Exam',date:'2026-04-30',color:'#FF9F43'}];
+
+let state=loadState();
+let viewDate=todayStr();
+
+function todayStr(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+function loadState(){
+  try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);if(!s.labels)s.labels=DEFAULT_LABELS;if(!s.schedule)s.schedule=DEFAULT_SCHEDULE;if(!s.countdowns)s.countdowns=DEFAULT_COUNTDOWNS;if(!s.days)s.days={};if(!s.gmat)s.gmat=[];return s}}catch(e){}
+  return{labels:JSON.parse(JSON.stringify(DEFAULT_LABELS)),schedule:JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),countdowns:JSON.parse(JSON.stringify(DEFAULT_COUNTDOWNS)),days:{},gmat:[]}
+}
+function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+function getDayData(ds){if(!state.days[ds])state.days[ds]={completed:[],notes:''};return state.days[ds]}
+function getLabel(id){return state.labels.find(l=>l.id===id)||{id,name:id,color:'#94A3B8'}}
+
+function render(){renderCountdowns();renderStats();renderSchedule();renderHistory();renderHeatmap();renderGMATLog();renderGMATChart();renderLabels()}
+
+function renderCountdowns(){
+  const el=document.getElementById('countdowns-list');
+  if(!state.countdowns.length){el.innerHTML='';return}
+  el.innerHTML=state.countdowns.map(c=>{
+    const diff=Math.ceil((new Date(c.date+'T00:00:00')-new Date())/864e5);
+    const past=diff<0;
+    return`<div class="countdown-card" style="border:1px solid ${c.color}22;background:linear-gradient(135deg,${c.color}08,${c.color}02)">
+      <div class="countdown-left"><div class="countdown-color" style="background:${c.color}"></div><div class="countdown-info"><div class="countdown-name">${esc(c.name)}</div><div class="countdown-date-text">${c.date}</div></div></div>
+      <div class="countdown-days" style="color:${past?'var(--danger)':c.color}">${Math.abs(diff)} <span class="unit">${past?'days ago':'days left'}</span></div>
+      <div class="countdown-actions"><button class="btn btn-ghost btn-sm" onclick="openCountdownModal('${c.id}')">&#9998;</button><button class="btn btn-ghost btn-sm" onclick="deleteCountdown('${c.id}')">&times;</button></div>
+    </div>`
+  }).join('')
+}
+
+function renderStats(){
+  const dayData=getDayData(viewDate);const total=state.schedule.length;
+  const pct=total?Math.round((dayData.completed.length/total)*100):0;
+  document.getElementById('stat-today').innerHTML=`${pct}<span class="unit">%</span>`;
+  let streak=0,d=new Date();
+  while(true){const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;const day=state.days[ds];if(day&&day.completed.length>=Math.floor(total*.5)){streak++;d.setDate(d.getDate()-1)}else if(ds===todayStr()){d.setDate(d.getDate()-1)}else break}
+  document.getElementById('stat-streak').innerHTML=`${streak} <span class="unit">days</span>`;
+  let wT=0,wD=0;for(let i=0;i<7;i++){const wd=new Date();wd.setDate(wd.getDate()-i);const ws=`${wd.getFullYear()}-${String(wd.getMonth()+1).padStart(2,'0')}-${String(wd.getDate()).padStart(2,'0')}`;if(state.days[ws]){wT+=state.days[ws].completed.length;wD++}}
+  document.getElementById('stat-week').innerHTML=`${wD?Math.round((wT/(wD*total))*100):0}<span class="unit">%</span>`;
+  document.getElementById('stat-total').textContent=Object.keys(state.days).filter(k=>state.days[k].completed.length>0).length;
+  const mainDate=new Date(viewDate+'T00:00:00');
+  document.getElementById('main-date').textContent=mainDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  document.getElementById('main-date-sub').textContent=viewDate===todayStr()?'Today':viewDate
+}
+
+function renderSchedule(){
+  const dayData=getDayData(viewDate);const now=new Date();const curMin=now.getHours()*60+now.getMinutes();const isToday=viewDate===todayStr();
+  document.getElementById('schedule-list').innerHTML=state.schedule.map((block,idx)=>{
+    const done=dayData.completed.includes(block.id);const[h,m]=block.time.split(':').map(Number);const bMin=h*60+m;
+    const isActive=isToday&&curMin>=bMin&&curMin<bMin+(block.dur||30);const lbl=getLabel(block.label);
+    return`<div class="time-block ${done?'completed':''} ${isActive?'active-now':''}">
+      <div class="block-time">${block.time}</div>
+      <div class="block-info"><div class="block-title">${esc(block.title)}</div><div class="block-desc">${esc(block.desc||'')}</div></div>
+      <div class="block-right">
+        <span class="block-tag" style="background:${lbl.color}18;color:${lbl.color}">${esc(lbl.name)}</span>
+        <div class="block-edit-btns">
+          ${idx>0?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();moveBlock(${idx},-1)">&#8593;</button>`:''}
+          ${idx<state.schedule.length-1?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();moveBlock(${idx},1)">&#8595;</button>`:''}
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openBlockModal('${block.id}')">&#9998;</button>
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deleteBlock('${block.id}')">&times;</button>
+        </div>
+        <div class="check-circle" onclick="event.stopPropagation();toggleBlock('${block.id}')">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6.5L4.5 9L10 3" stroke="#0C0C0E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+    </div>`
+  }).join('');
+  document.getElementById('daily-notes').value=dayData.notes||'';
+  document.getElementById('nav-date-label').textContent=viewDate
+}
+
+function renderLabels(){
+  document.getElementById('labels-list').innerHTML=state.labels.map(l=>{
+    const count=state.schedule.filter(s=>s.label===l.id).length;
+    return`<div class="label-row">
+      <div class="label-color-dot" style="background:${l.color}" onclick="openLabelModal('${l.id}')"></div>
+      <div class="label-name">${esc(l.name)}</div>
+      <div class="label-count">${count} block${count!==1?'s':''}</div>
+      <button class="btn btn-ghost btn-sm" onclick="openLabelModal('${l.id}')">&#9998;</button>
+      <button class="btn btn-ghost btn-sm" onclick="deleteLabel('${l.id}')">&times;</button>
+    </div>`
+  }).join('')
+}
+
+function renderHistory(){
+  const list=document.getElementById('history-list');const total=state.schedule.length;
+  const dates=Object.keys(state.days).sort().reverse().slice(0,30);
+  if(!dates.length){list.innerHTML='<div class="empty-state">No history yet</div>';return}
+  list.innerHTML=dates.map(ds=>{const day=state.days[ds];const pct=total?Math.round((day.completed.length/total)*100):0;const color=pct>=80?'var(--accent)':pct>=50?'var(--warm)':'var(--danger)';
+    return`<div class="history-row" onclick="viewDate='${ds}';switchTab('schedule');render()"><div class="history-date">${ds}</div><div class="history-bar-wrap"><div class="history-bar" style="width:${pct}%;background:${color}"></div></div><div class="history-pct" style="color:${color}">${pct}%</div></div>`
+  }).join('')
+}
+
+function renderHeatmap(){
+  const grid=document.getElementById('heatmap');const total=state.schedule.length;const cells=[];
+  for(let i=89;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;const day=state.days[ds];let lv=0;
+    if(day&&total){const p=day.completed.length/total;if(p>.9)lv=5;else if(p>.7)lv=4;else if(p>.5)lv=3;else if(p>.25)lv=2;else if(p>0)lv=1}
+    cells.push(`<div class="heat-cell heat-${lv}" data-tip="${ds}: ${day?day.completed.length:0}/${total}"></div>`)}
+  grid.innerHTML=cells.join('')
+}
+
+// Schedule CRUD
+function toggleBlock(id){const d=getDayData(viewDate);const i=d.completed.indexOf(id);if(i>=0)d.completed.splice(i,1);else d.completed.push(id);saveState();render()}
+function moveBlock(idx,dir){const t=state.schedule[idx];state.schedule[idx]=state.schedule[idx+dir];state.schedule[idx+dir]=t;saveState();render()}
+function deleteBlock(id){if(!confirm('Delete this block?'))return;state.schedule=state.schedule.filter(b=>b.id!==id);saveState();render()}
+function saveNotes(){const d=getDayData(viewDate);d.notes=document.getElementById('daily-notes').value;saveState()}
+function navDate(delta){const d=new Date(viewDate+'T00:00:00');d.setDate(d.getDate()+delta);viewDate=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;render()}
+function navToToday(){viewDate=todayStr();render()}
+function resetToday(){if(confirm('Reset all checkmarks for this day?')){const d=getDayData(viewDate);d.completed=[];d.notes='';saveState();render()}}
+
+// Countdown CRUD
+function deleteCountdown(id){if(confirm('Remove this countdown?')){state.countdowns=state.countdowns.filter(c=>c.id!==id);saveState();render()}}
+
+// Label CRUD
+function deleteLabel(id){
+  const count=state.schedule.filter(s=>s.label===id).length;
+  const msg=count>0?`This label is used by ${count} block(s). Blocks will show the raw ID. Delete?`:'Delete this label?';
+  if(!confirm(msg))return;
+  state.labels=state.labels.filter(l=>l.id!==id);saveState();render()
+}
+
+// GMAT
+function logGMAT(){
+  const type=document.getElementById('gmat-type').value;const topic=document.getElementById('gmat-topic').value.trim()||'General';
+  const correct=parseInt(document.getElementById('gmat-correct').value)||0;const total=parseInt(document.getElementById('gmat-total').value)||0;
+  const minutes=parseInt(document.getElementById('gmat-minutes').value)||0;
+  if(!total){alert('Enter total questions');return}
+  state.gmat.push({date:todayStr(),type,topic,correct,total,minutes,accuracy:Math.round((correct/total)*100)});saveState();
+  document.getElementById('gmat-topic').value='';document.getElementById('gmat-correct').value='';document.getElementById('gmat-total').value='';document.getElementById('gmat-minutes').value='';render()
+}
+function renderGMATLog(){
+  const log=document.getElementById('gmat-log');const entries=[...state.gmat].reverse().slice(0,50);
+  if(!entries.length){log.innerHTML='<div class="empty-state">No practice logged yet</div>';return}
+  log.innerHTML=entries.map(e=>`<div class="gmat-log-entry"><span class="gmat-log-date">${e.date}</span><span class="gmat-log-topic">${e.type.toUpperCase()} · ${esc(e.topic)}</span><span class="gmat-log-score" style="color:${e.accuracy>=75?'var(--accent)':e.accuracy>=50?'var(--warm)':'var(--danger)'}">${e.accuracy}% (${e.correct}/${e.total})</span></div>`).join('')
+}
+function renderGMATChart(){
+  const canvas=document.getElementById('gmat-chart');if(!canvas)return;
+  const ctx=canvas.getContext('2d');const rect=canvas.getBoundingClientRect();
+  canvas.width=rect.width*2;canvas.height=140*2;ctx.scale(2,2);
+  const w=rect.width,h=140,pad={top:10,right:10,bottom:24,left:36};ctx.clearRect(0,0,w,h);
+  const entries=state.gmat.slice(-20);
+  if(entries.length<2){ctx.font='12px DM Sans';ctx.fillStyle='#5E5D58';ctx.textAlign='center';ctx.fillText('Log 2+ practices to see trend',w/2,h/2);return}
+  const plotW=w-pad.left-pad.right,plotH=h-pad.top-pad.bottom;
+  ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.lineWidth=1;
+  for(let pct of[25,50,75,100]){const y=pad.top+plotH-(pct/100)*plotH;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(w-pad.right,y);ctx.stroke();ctx.font='10px JetBrains Mono';ctx.fillStyle='#5E5D58';ctx.textAlign='right';ctx.fillText(pct+'%',pad.left-4,y+3)}
+  function drawLine(data,color){if(data.length<2)return;ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineJoin='round';data.forEach((e,i)=>{const x=pad.left+(i/(data.length-1))*plotW;const y=pad.top+plotH-(e.accuracy/100)*plotH;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)});ctx.stroke();data.forEach((e,i)=>{const x=pad.left+(i/(data.length-1))*plotW;const y=pad.top+plotH-(e.accuracy/100)*plotH;ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill()})}
+  drawLine(entries.filter(e=>e.type==='quant'),'#FF9F43');drawLine(entries.filter(e=>e.type==='verbal'),'#54A0FF');
+  ctx.font='10px DM Sans';ctx.fillStyle='#FF9F43';ctx.textAlign='left';ctx.fillText('● Quant',pad.left,h-4);ctx.fillStyle='#54A0FF';ctx.fillText('● Verbal',pad.left+65,h-4)
+}
+
+// Tabs
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  ['schedule','gmat','history','labels'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==tab));
+  if(tab==='gmat')setTimeout(renderGMATChart,50)
+}
+
+// Modals
+function openModal(html){document.getElementById('modal-body').innerHTML=html;document.getElementById('modal-overlay').classList.add('open')}
+function closeModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('modal-overlay').classList.remove('open')}
+
+function colorPicker(selected,name){
+  return`<div class="color-options" id="${name}-colors">${PRESET_COLORS.map(c=>`<div class="color-opt ${c===selected?'selected':''}" style="background:${c}" onclick="document.querySelectorAll('#${name}-colors .color-opt').forEach(x=>x.classList.remove('selected'));this.classList.add('selected');document.getElementById('${name}-color-val').value='${c}'"></div>`).join('')}</div><input type="hidden" id="${name}-color-val" value="${selected||PRESET_COLORS[0]}">`
+}
+function labelOptions(selected){return state.labels.map(l=>`<option value="${l.id}" ${l.id===selected?'selected':''}>${l.name}</option>`).join('')}
+
+// Block Modal
+function openBlockModal(editId){
+  const ex=editId?state.schedule.find(b=>b.id===editId):null;const isEdit=!!ex;
+  openModal(`<h2>${isEdit?'Edit block':'Add new block'}</h2>
+    <div class="form-row"><div class="form-group"><label class="form-label">Time</label><input type="time" class="form-input" id="blk-time" value="${ex?ex.time:'08:00'}"></div>
+    <div class="form-group"><label class="form-label">Duration (min)</label><input type="number" class="form-input" id="blk-dur" value="${ex?ex.dur:30}" min="5" step="5"></div></div>
+    <div class="form-group"><label class="form-label">Title</label><input type="text" class="form-input" id="blk-title" value="${ex?esc(ex.title):''}" placeholder="e.g. Morning workout"></div>
+    <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" id="blk-desc" value="${ex?esc(ex.desc||''):''}" placeholder="Optional details"></div>
+    <div class="form-group"><label class="form-label">Label</label><select class="form-input" id="blk-label">${labelOptions(ex?ex.label:'')}</select></div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-accent" onclick="saveBlock('${editId||''}')">${isEdit?'Save changes':'Add block'}</button></div>`)
+}
+function saveBlock(editId){
+  const time=document.getElementById('blk-time').value;const dur=parseInt(document.getElementById('blk-dur').value)||30;
+  const title=document.getElementById('blk-title').value.trim();const desc=document.getElementById('blk-desc').value.trim();
+  const label=document.getElementById('blk-label').value;
+  if(!title){alert('Title is required');return}if(!time){alert('Time is required');return}
+  if(editId){const b=state.schedule.find(b=>b.id===editId);if(b)Object.assign(b,{time,dur,title,desc,label})}
+  else state.schedule.push({id:uid(),time,dur,title,desc,label});
+  state.schedule.sort((a,b)=>a.time.localeCompare(b.time));saveState();closeModal();render()
+}
+
+// Label Modal
+function openLabelModal(editId){
+  const ex=editId?state.labels.find(l=>l.id===editId):null;const isEdit=!!ex;
+  openModal(`<h2>${isEdit?'Edit label':'New label'}</h2>
+    <div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" id="lbl-name" value="${ex?esc(ex.name):''}" placeholder="e.g. Fitness" maxlength="20"></div>
+    <div class="form-group"><label class="form-label">Color</label>${colorPicker(ex?ex.color:PRESET_COLORS[0],'lbl')}</div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-accent" onclick="saveLabel('${editId||''}')">${isEdit?'Save':'Create'}</button></div>`)
+}
+function saveLabel(editId){
+  const name=document.getElementById('lbl-name').value.trim();const color=document.getElementById('lbl-color-val').value;
+  if(!name){alert('Name is required');return}
+  if(editId){const l=state.labels.find(l=>l.id===editId);if(l){l.name=name;l.color=color}}
+  else{const id=name.toLowerCase().replace(/[^a-z0-9]/g,'_').slice(0,20);if(state.labels.find(l=>l.id===id)){alert('Similar label exists');return}state.labels.push({id,name,color})}
+  saveState();closeModal();render()
+}
+
+// Countdown Modal
+function openCountdownModal(editId){
+  const ex=editId?state.countdowns.find(c=>c.id===editId):null;const isEdit=!!ex;
+  openModal(`<h2>${isEdit?'Edit countdown':'Add countdown'}</h2>
+    <div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" id="cd-name" value="${ex?esc(ex.name):''}" placeholder="e.g. GMAT Exam"></div>
+    <div class="form-group"><label class="form-label">Target date</label><input type="date" class="form-input" id="cd-date" value="${ex?ex.date:''}"></div>
+    <div class="form-group"><label class="form-label">Color</label>${colorPicker(ex?ex.color:PRESET_COLORS[1],'cd')}</div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-accent" onclick="saveCountdown('${editId||''}')">${isEdit?'Save':'Add'}</button></div>`)
+}
+function saveCountdown(editId){
+  const name=document.getElementById('cd-name').value.trim();const date=document.getElementById('cd-date').value;const color=document.getElementById('cd-color-val').value;
+  if(!name||!date){alert('Name and date are required');return}
+  if(editId){const c=state.countdowns.find(c=>c.id===editId);if(c)Object.assign(c,{name,date,color})}
+  else state.countdowns.push({id:uid(),name,date,color});
+  state.countdowns.sort((a,b)=>a.date.localeCompare(b.date));saveState();closeModal();render()
+}
+
+// Export/Import
+function exportData(){
+  const json=JSON.stringify(state,null,2);const blob=new Blob([json],{type:'application/json'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`routine-engine-${todayStr()}.json`;a.click();URL.revokeObjectURL(url)
+}
+function importData(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const imp=JSON.parse(e.target.result);const merged={...state};
+      if(imp.labels){for(const l of imp.labels){const ex=merged.labels.find(x=>x.id===l.id);if(ex){ex.name=l.name;ex.color=l.color}else merged.labels.push(l)}}
+      if(imp.schedule)merged.schedule=imp.schedule;
+      if(imp.countdowns){for(const c of imp.countdowns){const ex=merged.countdowns.find(x=>x.id===c.id);if(ex)Object.assign(ex,c);else merged.countdowns.push(c)}}
+      if(imp.days){for(const[date,dd] of Object.entries(imp.days)){if(!merged.days[date])merged.days[date]=dd;else if(dd.completed.length>merged.days[date].completed.length)merged.days[date]=dd}}
+      if(imp.gmat){const keys=new Set(state.gmat.map(g=>`${g.date}-${g.type}-${g.topic}-${g.correct}`));for(const g of imp.gmat){if(!keys.has(`${g.date}-${g.type}-${g.topic}-${g.correct}`))merged.gmat.push(g)}}
+      state=merged;saveState();render();alert('Data imported and merged successfully!')
+    }catch(err){alert('Invalid file format.')}
+  };reader.readAsText(file);event.target.value=''
+}
+
+render();
+setInterval(()=>{if(viewDate===todayStr())render()},60000);
+
+// ══════════════════════════════════════
+// PWA — Service Worker + Install Prompt
+// ══════════════════════════════════════
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').then(r=>{
+    console.log('SW registered, scope:',r.scope);
+    // Check for updates every 30 min
+    setInterval(()=>r.update(),1800000);
+  }).catch(e=>console.warn('SW registration failed:',e));
+}
+
+// Capture the install prompt
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  showInstallBanner();
+});
+
+function showInstallBanner(){
+  if(document.getElementById('install-banner'))return;
+  const banner=document.createElement('div');
+  banner.id='install-banner';
+  banner.style.cssText='position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--accent);border-radius:12px;padding:12px 20px;display:flex;align-items:center;gap:12px;z-index:50;box-shadow:0 8px 32px rgba(0,0,0,.4);max-width:90%;font-size:14px';
+  banner.innerHTML=`
+    <span style="color:var(--accent);font-size:20px;flex-shrink:0">&#9889;</span>
+    <span style="flex:1">Install <b>Routine Engine</b> as an app for quick access</span>
+    <button onclick="installPWA()" style="font-family:var(--font);font-size:13px;font-weight:600;padding:8px 18px;border-radius:8px;border:none;background:var(--accent);color:#0C0C0E;cursor:pointer;white-space:nowrap">Install</button>
+    <button onclick="this.parentElement.remove()" style="font-family:var(--font);font-size:16px;padding:4px 8px;border:none;background:transparent;color:var(--text3);cursor:pointer">&times;</button>
+  `;
+  document.body.appendChild(banner);
+}
+
+async function installPWA(){
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  const{outcome}=await deferredPrompt.userChoice;
+  console.log('Install outcome:',outcome);
+  deferredPrompt=null;
+  const b=document.getElementById('install-banner');
+  if(b)b.remove();
+}
+
+window.addEventListener('appinstalled',()=>{
+  console.log('PWA installed');
+  const b=document.getElementById('install-banner');
+  if(b)b.remove();
+});
+</script>
+</body>
+</html>

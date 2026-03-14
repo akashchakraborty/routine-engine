@@ -1,0 +1,27 @@
+{
+  "name": "Routine Engine",
+  "short_name": "Routine",
+  "description": "Daily routine tracker with GMAT prep, AI learning, and habit streaks",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0C0C0E",
+  "theme_color": "#C8FF3E",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "lifestyle"],
+  "lang": "en",
+  "dir": "ltr"
+}
