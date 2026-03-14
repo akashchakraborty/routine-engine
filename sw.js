@@ -1,10 +1,12 @@
-const CACHE_NAME = 'routine-engine-v2';
+const CACHE_NAME = 'routine-engine-v3';
+
+// Use relative paths based on SW scope (the directory sw.js lives in)
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  './',
+  './index.html',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
   'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap'
 ];
 
@@ -13,9 +15,8 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(ASSETS).catch(err => {
-        // Don't fail install if a font fetch fails (e.g. offline)
         console.warn('Some assets failed to cache:', err);
-        return cache.addAll(['/index.html', '/manifest.json']);
+        return cache.addAll(['./index.html', './manifest.json']);
       });
     })
   );
@@ -50,7 +51,7 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
           return response;
         })
-        .catch(() => caches.match(request).then(r => r || caches.match('/index.html')))
+        .catch(() => caches.match(request).then(r => r || caches.match('./index.html')))
     );
     return;
   }

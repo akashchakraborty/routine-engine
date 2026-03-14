@@ -534,7 +534,7 @@ setInterval(()=>{if(viewDate===todayStr())render()},60000);
 // PWA — Service Worker + Install Prompt
 // ══════════════════════════════════════
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/sw.js').then(r=>{
+  navigator.serviceWorker.register('./sw.js').then(r=>{
     console.log('SW registered, scope:',r.scope);
     // Check for updates every 30 min
     setInterval(()=>r.update(),1800000);
