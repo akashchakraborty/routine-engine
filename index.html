@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Akash · Routine Engine</title>
+<title>Routine Engine</title>
 <meta name="theme-color" content="#C8FF3E">
 <meta name="description" content="Daily routine tracker with GMAT prep, AI learning, and habit streaks">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -484,22 +484,27 @@ onAuthStateChanged(auth,async(user)=>{
 // ══════════════════════════════════════
 const STORAGE_KEY='routine_engine_v2';
 const PRESET_COLORS=['#FF6B6B','#FF9F43','#FECA57','#C8FF3E','#2DD4BF','#54A0FF','#A78BFA','#F472B6','#6EE7B7','#FCA5A5','#94A3B8','#67E8F9','#FDE68A','#D4D4D8'];
-const DEFAULT_LABELS=[{id:'gmat',name:'GMAT',color:'#FF9F43'},{id:'work',name:'Work',color:'#54A0FF'},{id:'health',name:'Health',color:'#2DD4BF'},{id:'ai',name:'AI',color:'#A78BFA'},{id:'personal',name:'Personal',color:'#C8FF3E'},{id:'rest',name:'Rest',color:'#94A3B8'}];
+const DEFAULT_LABELS=[{id:'tutorial',name:'Tutorial',color:'#FECA57'},{id:'work',name:'Work',color:'#54A0FF'},{id:'health',name:'Health',color:'#2DD4BF'},{id:'learning',name:'Learning',color:'#A78BFA'},{id:'personal',name:'Personal',color:'#C8FF3E'},{id:'rest',name:'Rest',color:'#94A3B8'}];
+
+// Tutorial schedule — each block teaches a feature
+const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
+const tutorialDeadline=`${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`;
+
 const DEFAULT_SCHEDULE=[
-  {id:'s1',time:'06:00',title:'Wake up + freshen up',desc:'Morning hygiene, water, light stretch',label:'rest',dur:30},
-  {id:'s2',time:'06:30',title:'GMAT practice — Quant',desc:'Focus session: problem sets + review',label:'gmat',dur:60},
-  {id:'s3',time:'07:30',title:'GMAT practice — Verbal',desc:'RC, CR, or SC drills',label:'gmat',dur:45},
-  {id:'s4',time:'08:15',title:'Get ready + commute',desc:'45 min travel to office',label:'work',dur:45},
-  {id:'s5',time:'09:00',title:'Office — Irdeto',desc:'Incident mgmt, ops, Keystone',label:'work',dur:510},
-  {id:'s6',time:'17:30',title:'Commute back',desc:'45 min travel home',label:'work',dur:45},
-  {id:'s7',time:'18:15',title:'Rest + freshen up',desc:'Decompress, snack, change',label:'rest',dur:45},
-  {id:'s8',time:'19:00',title:'Time with GF',desc:'Call / hangout / quality time',label:'personal',dur:60},
-  {id:'s9',time:'20:00',title:'Dog walk + exercise',desc:'45 min walk + your own workout',label:'health',dur:60},
-  {id:'s10',time:'21:00',title:'AI / Cloud learning',desc:'Roadmap study: certs, hands-on labs',label:'ai',dur:60},
-  {id:'s11',time:'22:00',title:'Book reading',desc:'Non-screen wind-down reading',label:'personal',dur:45},
-  {id:'s12',time:'22:45',title:'Wind down + sleep prep',desc:'No screens, journal, sleep by midnight',label:'rest',dur:75}
+  {id:'t1',time:'00:01',title:'Welcome! Tap the circle to check this off',desc:'Each block has a check circle on the right. Tap it to mark complete.',label:'tutorial',dur:5},
+  {id:'t2',time:'00:02',title:'Sign in with Google (top bar)',desc:'Click "Sign in" to sync your data across all devices automatically.',label:'tutorial',dur:5},
+  {id:'t3',time:'00:03',title:'Edit this block — hover and tap the pencil',desc:'Hover (or long-press on phone) any block to see edit, reorder, and delete buttons.',label:'tutorial',dur:5},
+  {id:'t4',time:'00:04',title:'Add your own block with "+ Add block"',desc:'Tap the green "+ Add block" button above. Set a time, title, duration, and label.',label:'tutorial',dur:5},
+  {id:'t5',time:'00:05',title:'Create a custom label in the Labels tab',desc:'Go to the Labels tab. Tap "+ New label". Pick a name and color.',label:'tutorial',dur:5},
+  {id:'t6',time:'00:06',title:'Add a countdown with "+ Add countdown"',desc:'Tap "+ Add countdown" at the top. Set an exam date, deadline, or goal.',label:'tutorial',dur:5},
+  {id:'t7',time:'00:07',title:'Log a GMAT practice in the GMAT tab',desc:'Go to GMAT tab. Enter a type, topic, score, and tap "Log practice".',label:'tutorial',dur:5},
+  {id:'t8',time:'00:08',title:'Check the History tab for your heatmap',desc:'The History tab shows a 90-day heatmap and daily completion percentages.',label:'tutorial',dur:5},
+  {id:'t9',time:'00:09',title:'Navigate dates with the arrows',desc:'Use the left/right arrows above the schedule to view past or future days.',label:'tutorial',dur:5},
+  {id:'t10',time:'00:10',title:'Write a daily note at the bottom',desc:'Scroll down to the "Daily notes" box. Write reflections — they save per day.',label:'tutorial',dur:5},
+  {id:'t11',time:'00:11',title:'Export your data with the Export button',desc:'Tap "Export" in the header to download a JSON backup of all your data.',label:'tutorial',dur:5},
+  {id:'t12',time:'00:12',title:'Delete these tutorial blocks and build your routine!',desc:'Hover each block and tap the X to delete. Then add your real schedule. You got this!',label:'tutorial',dur:5}
 ];
-const DEFAULT_COUNTDOWNS=[{id:'c1',name:'GMAT Exam',date:'2026-04-30',color:'#FF9F43'}];
+const DEFAULT_COUNTDOWNS=[{id:'tutorial-deadline',name:'Complete the tutorial!',date:tutorialDeadline,color:'#FECA57'}];
 
 let state=loadState();
 let viewDate=todayStr();
