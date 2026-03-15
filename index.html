@@ -198,7 +198,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
   <div id="signin-screen" class="signin-screen">
     <div class="signin-logo">Routine Engine</div>
     <div class="signin-title">Your daily command center</div>
-    <div class="signin-sub">Sign in with Google to sync your routine, GMAT progress, and streaks across all your devices.</div>
+    <div class="signin-sub">Sign in with Google to sync your routine, progress, and streaks across all your devices.</div>
     <button class="signin-btn" onclick="signInWithGoogle()">
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
       Sign in with Google
@@ -249,7 +249,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 
     <div class="tabs">
       <button class="tab active" data-tab="schedule" onclick="switchTab('schedule')">Schedule</button>
-      <button class="tab" data-tab="gmat" onclick="switchTab('gmat')">GMAT</button>
+      <button class="tab" data-tab="gmat" onclick="switchTab('gmat')">Practice</button>
       <button class="tab" data-tab="history" onclick="switchTab('history')">History</button>
       <button class="tab" data-tab="labels" onclick="switchTab('labels')">Labels</button>
     </div>
@@ -497,7 +497,7 @@ const DEFAULT_SCHEDULE=[
   {id:'t4',time:'00:04',title:'Add your own block with "+ Add block"',desc:'Tap the green "+ Add block" button above. Set a time, title, duration, and label.',label:'tutorial',dur:5},
   {id:'t5',time:'00:05',title:'Create a custom label in the Labels tab',desc:'Go to the Labels tab. Tap "+ New label". Pick a name and color.',label:'tutorial',dur:5},
   {id:'t6',time:'00:06',title:'Add a countdown with "+ Add countdown"',desc:'Tap "+ Add countdown" at the top. Set an exam date, deadline, or goal.',label:'tutorial',dur:5},
-  {id:'t7',time:'00:07',title:'Log a GMAT practice in the GMAT tab',desc:'Go to GMAT tab. Enter a type, topic, score, and tap "Log practice".',label:'tutorial',dur:5},
+  {id:'t7',time:'00:07',title:'Track practice in the Practice tab',desc:'Go to the Practice tab. Log sessions with type, topic, and score to see trends.',label:'tutorial',dur:5},
   {id:'t8',time:'00:08',title:'Check the History tab for your heatmap',desc:'The History tab shows a 90-day heatmap and daily completion percentages.',label:'tutorial',dur:5},
   {id:'t9',time:'00:09',title:'Navigate dates with the arrows',desc:'Use the left/right arrows above the schedule to view past or future days.',label:'tutorial',dur:5},
   {id:'t10',time:'00:10',title:'Write a daily note at the bottom',desc:'Scroll down to the "Daily notes" box. Write reflections — they save per day.',label:'tutorial',dur:5},
