@@ -1,7 +1,7 @@
 {
   "name": "Routine Engine",
   "short_name": "Routine",
-  "description": "Daily routine tracker with GMAT prep, AI learning, and habit streaks",
+  "description": "Free daily routine tracker. Customizable schedule, practice analytics, streaks, and cloud sync.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0C0C0E",
